@@ -1,5 +1,6 @@
 package br.com.cupom.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -7,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 @Data
-@Document(collection = "XML_NOTA_FISCAL_CLIENTE")
+@Document(collection = "xmlNotaFiscalCliente")
 public class NotaFiscalCliente {
 
     @MongoId
@@ -17,6 +18,7 @@ public class NotaFiscalCliente {
     private Long cnpjCliente;
 
     @Field("xmlNotaFiscal")
+    @JsonIgnore
     private String xmlNotaFiscal;
 
 }
