@@ -58,7 +58,7 @@ public class NotaFiscalService {
 
     public void processaXML(NotaFiscalModel notaFiscalModel) throws Exception {
 
-        this.leitorXml.processaMxl(notaFiscalModel.getArquivo().getInputStream());
+        this.leitorXml.processarArquivoXML(notaFiscalModel);
 
     }
 
