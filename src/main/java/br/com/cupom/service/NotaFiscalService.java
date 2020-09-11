@@ -1,11 +1,17 @@
 package br.com.cupom.service;
 
+import br.com.cupom.api.assembler.NotaFiscalDissambler;
+import br.com.cupom.api.exception.EntidadeNaoEncontradaException;
 import br.com.cupom.api.model.NotaFiscalModel;
 import br.com.cupom.model.NotaFiscalCliente;
 import br.com.cupom.repository.NotaFsicalRepository;
+import br.com.cupom.utils.LeitorXml;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
@@ -15,6 +21,12 @@ public class NotaFiscalService {
 
     @Autowired
     private NotaFsicalRepository repository;
+
+    @Autowired
+    private NotaFiscalDissambler notaFiscalDissambler;
+
+    @Autowired
+    private LeitorXml leitorXml;
 
     private String LeituraXml(InputStream inputStream){
 
@@ -30,11 +42,24 @@ public class NotaFiscalService {
         return xml.toString().trim();
     }
 
-    public NotaFiscalCliente salvaXMlNotaFiscal(NotaFiscalModel notaFiscalModel) throws IOException {
+    public NotaFiscalModel salvaXMlNotaFiscal(NotaFiscalModel notaFiscalModel) throws IOException {
         String xml = this.LeituraXml(notaFiscalModel.getArquivo().getInputStream());
-        NotaFiscalCliente notaFiscalCliente = new NotaFiscalCliente();
-        notaFiscalCliente.setCnpjCliente(notaFiscalModel.getCnpjCliente());
+        NotaFiscalCliente notaFiscalCliente = notaFiscalDissambler.ModelToDomain(notaFiscalModel);
         notaFiscalCliente.setXmlNotaFiscal(xml);
-        return repository.save(notaFiscalCliente);
+        notaFiscalCliente = repository.save(notaFiscalCliente);
+        return notaFiscalDissambler.DomainToModel(notaFiscalCliente);
+
     }
+
+    public NotaFiscalModel buscar(String id) {
+        NotaFiscalCliente nfDomain = repository.findById(id).orElseThrow(() -> new EntidadeNaoEncontradaException(id));
+        return notaFiscalDissambler.DomainToModel(nfDomain);
+    }
+
+    public void processaXML(NotaFiscalModel notaFiscalModel) throws Exception {
+
+        this.leitorXml.processaMxl(notaFiscalModel.getArquivo().getInputStream());
+
+    }
+
 }

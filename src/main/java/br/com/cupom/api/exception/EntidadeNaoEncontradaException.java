@@ -2,9 +2,9 @@ package br.com.cupom.api.exception;
 
 public class EntidadeNaoEncontradaException extends RuntimeException {
 
-    public static final String MSG = "Entidade de código %d não encontrado";
+    public static final String MSG = "Entidade de código %s não encontrado";
 
-    public EntidadeNaoEncontradaException(Long codigo){
+    public EntidadeNaoEncontradaException(String codigo){
         super(String.format(MSG,codigo));
     }
 
