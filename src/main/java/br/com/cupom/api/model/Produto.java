@@ -1,10 +1,28 @@
 package br.com.cupom.api.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
+@JsonPropertyOrder({"cProd",
+        "cEAN",
+        "xProd",
+        "NCM",
+        "CEST",
+        "CFOP",
+        "uCom",
+        "qCom",
+        "vUnCom",
+        "vProd",
+        "cEANTrib",
+        "uTrib",
+        "qTrib",
+        "vUnTrib",
+        "vDesc",
+        "indTot",
+        "nItemPed"})
 public class Produto {
 
     private String cProd;

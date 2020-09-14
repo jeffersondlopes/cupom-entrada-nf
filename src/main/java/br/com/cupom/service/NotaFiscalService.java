@@ -5,13 +5,11 @@ import br.com.cupom.api.exception.EntidadeNaoEncontradaException;
 import br.com.cupom.api.model.NotaFiscalModel;
 import br.com.cupom.model.NotaFiscalCliente;
 import br.com.cupom.repository.NotaFsicalRepository;
-import br.com.cupom.utils.LeitorXml;
+import br.com.cupom.utils.XmlNotaFiscal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.xml.sax.SAXException;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
@@ -26,7 +24,7 @@ public class NotaFiscalService {
     private NotaFiscalDissambler notaFiscalDissambler;
 
     @Autowired
-    private LeitorXml leitorXml;
+    private XmlNotaFiscal xmlNotaFiscal;
 
     private String LeituraXml(InputStream inputStream){
 
@@ -42,10 +40,15 @@ public class NotaFiscalService {
         return xml.toString().trim();
     }
 
+    @Transactional
     public NotaFiscalModel salvaXMlNotaFiscal(NotaFiscalModel notaFiscalModel) throws IOException {
+
         String xml = this.LeituraXml(notaFiscalModel.getArquivo().getInputStream());
         NotaFiscalCliente notaFiscalCliente = notaFiscalDissambler.ModelToDomain(notaFiscalModel);
-        notaFiscalCliente.setXmlNotaFiscal(xml);
+        String pathArquivoXml = xmlNotaFiscal.salvarArquivoXml(notaFiscalModel.getArquivo());
+
+        notaFiscalCliente.setXml(xml);
+        notaFiscalCliente.setPathXmlServer(pathArquivoXml);
         notaFiscalCliente = repository.save(notaFiscalCliente);
         return notaFiscalDissambler.DomainToModel(notaFiscalCliente);
 
@@ -56,9 +59,9 @@ public class NotaFiscalService {
         return notaFiscalDissambler.DomainToModel(nfDomain);
     }
 
-    public void processaXML(NotaFiscalModel notaFiscalModel) throws Exception {
+    public void processaXML() throws Exception {
 
-        this.leitorXml.processarArquivoXML(notaFiscalModel);
+        this.xmlNotaFiscal.main();
 
     }
 

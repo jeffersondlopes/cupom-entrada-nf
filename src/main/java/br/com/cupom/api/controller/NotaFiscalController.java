@@ -20,7 +20,7 @@ public class NotaFiscalController {
     @Autowired
     private NotaFiscalService notaFiscalService;
 
-   /* @PostMapping(value = "/arquivo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/enviar_arquivo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public NotaFiscalModel AddNovaFiscal(@Valid NotaFiscalModel notaFiscalModel){
 
@@ -34,13 +34,13 @@ public class NotaFiscalController {
 
         return null;
 
-    }*/
+    }
 
-    @PostMapping(value = "/arquivo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @GetMapping(value = "/processa_arquivo")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void AddNovaFiscal(@Valid NotaFiscalModel notaFiscalModel) throws Exception {
+    public void AddNovaFiscal() throws Exception {
 
-        this.notaFiscalService.processaXML(notaFiscalModel);
+        this.notaFiscalService.processaXML();
 
     }
 
