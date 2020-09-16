@@ -3,6 +3,7 @@ package br.com.cupom.service;
 import br.com.cupom.api.assembler.NotaFiscalDissambler;
 import br.com.cupom.api.exception.EntidadeNaoEncontradaException;
 import br.com.cupom.api.model.NotaFiscalModel;
+import br.com.cupom.api.model.Produto;
 import br.com.cupom.model.NotaFiscalCliente;
 import br.com.cupom.repository.NotaFsicalRepository;
 import br.com.cupom.utils.XmlNotaFiscal;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Scanner;
 
 @Service
@@ -26,22 +28,28 @@ public class NotaFiscalService {
     @Autowired
     private XmlNotaFiscal xmlNotaFiscal;
 
-    private String LeituraXml(InputStream inputStream){
+    @Autowired
+    private NotaFsicalRepository notaFsicalRepository;
+
+    @Autowired
+    private CadastroProdutoService cadastroProdutoService;
+
+    private String LeituraXml(InputStream inputStream) {
 
         var xml = new StringBuffer();
         Scanner scanner = new Scanner(inputStream);
 
-        while(scanner.hasNextLine()){
+        while (scanner.hasNextLine()) {
             xml.append(scanner.nextLine()
-                    .replace("\t","")
-                    .replace("\n",""));
+                    .replace("\t", "")
+                    .replace("\n", ""));
         }
 
         return xml.toString().trim();
     }
 
     @Transactional
-    public NotaFiscalModel salvaXMlNotaFiscal(NotaFiscalModel notaFiscalModel) throws IOException {
+    public NotaFiscalModel salvaXMlNFMongoDB(NotaFiscalModel notaFiscalModel) throws IOException {
 
         String xml = this.LeituraXml(notaFiscalModel.getArquivo().getInputStream());
         NotaFiscalCliente notaFiscalCliente = notaFiscalDissambler.ModelToDomain(notaFiscalModel);
@@ -59,10 +67,19 @@ public class NotaFiscalService {
         return notaFiscalDissambler.DomainToModel(nfDomain);
     }
 
-    public void processaXML() throws Exception {
+    public void cadastrarProdutos() throws Exception {
 
-        this.xmlNotaFiscal.main();
+        List<NotaFiscalCliente> listaNfPrincipal = notaFsicalRepository.findByStatus(1L);
+
+        if (listaNfPrincipal.size() > 0) {
+            listaNfPrincipal.forEach(p -> xmlNotaFiscal.parseNotaFiscal(p));
+            List<Produto> produtos = xmlNotaFiscal.geraListaProdutos(listaNfPrincipal);
+            cadastroProdutoService.cadastrarProdutos(produtos);
+
+            listaNfPrincipal.forEach(p -> {
+                notaFsicalRepository.save(p);
+            });
+        }
 
     }
-
 }

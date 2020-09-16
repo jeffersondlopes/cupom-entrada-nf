@@ -29,7 +29,7 @@ public class NotaFiscalCliente {
     private String xml;
 
     @DecimalMin("1")
-    private Long status = 1L;
+    private Integer status = 1;
 
     @Field("mensagensErro")
     private List<String> mensagensErro = new ArrayList<>();

@@ -6,11 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.xml.sax.SAXException;
 
 import javax.validation.Valid;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 
 @RestController
@@ -22,11 +19,10 @@ public class NotaFiscalController {
 
     @PostMapping(value = "/enviar_arquivo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public NotaFiscalModel AddNovaFiscal(@Valid NotaFiscalModel notaFiscalModel){
-
+    public NotaFiscalModel AddNovaFiscal(@Valid NotaFiscalModel notaFiscalModel) {
 
         try {
-            NotaFiscalModel notaFiscalCliente = notaFiscalService.salvaXMlNotaFiscal(notaFiscalModel);
+            NotaFiscalModel notaFiscalCliente = notaFiscalService.salvaXMlNFMongoDB(notaFiscalModel);
             return notaFiscalCliente;
         } catch (IOException e) {
             e.printStackTrace();
@@ -36,19 +32,15 @@ public class NotaFiscalController {
 
     }
 
+    @GetMapping("/{id}")
+    public NotaFiscalModel ConsultaNotaFiscalMongoDB(@PathVariable String id){
+        return notaFiscalService.buscar(id);
+    }
+
     @GetMapping(value = "/processa_arquivo")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void AddNovaFiscal() throws Exception {
-
-        this.notaFiscalService.processaXML();
-
-    }
-
-    @GetMapping("/{id}")
-    public NotaFiscalModel xmlNotaFiscal(@PathVariable String id){
-
-        return notaFiscalService.buscar(id);
-
+        this.notaFiscalService.cadastrarProdutos();
     }
 
 }

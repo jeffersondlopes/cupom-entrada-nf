@@ -3,7 +3,7 @@ package br.com.cupom.utils;
 import br.com.cupom.api.assembler.ProdutoDissambler;
 import br.com.cupom.api.model.Produto;
 import br.com.cupom.model.NotaFiscalCliente;
-import br.com.cupom.repository.NotaFsicalRepository;
+import br.com.cupom.service.CadastroProdutoService;
 import br.com.cupom.utils.notafiscal.TNFe;
 import br.com.cupom.utils.notafiscal.TNfeProc;
 import lombok.Data;
@@ -17,10 +17,10 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,10 +32,10 @@ public class XmlNotaFiscal {
     private Path pathXml = Paths.get("/home/jefferson/lixo");
 
     @Autowired
-    private NotaFsicalRepository notaFsicalRepository;
+    private ProdutoDissambler produtoDissambler;
 
     @Autowired
-    private ProdutoDissambler produtoDissambler;
+    private CadastroProdutoService cadastroProdutoService;
 
     public String salvarArquivoXml(MultipartFile file) throws IOException {
 
@@ -43,21 +43,6 @@ public class XmlNotaFiscal {
         Path resolve = this.pathXml.resolve(uuid);
         Files.copy(file.getInputStream(), resolve);
         return resolve.toString();
-
-    }
-
-    private Object xmlJaxb(InputStream is)  {
-
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(TNfeProc.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            TNfeProc tNfeProc = (TNfeProc) unmarshaller.unmarshal(is);
-            return tNfeProc;
-        } catch (JAXBException ex){
-            return "Erro no parse: " + ex.getMessage();
-        } catch (Exception ex){
-            return "Erro ao abrir " + ex.getMessage();
-        }
 
     }
 
@@ -69,23 +54,28 @@ public class XmlNotaFiscal {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             TNfeProc tNfeProc = (TNfeProc) unmarshaller.unmarshal(is);
             return tNfeProc;
+        } catch (JAXBException ex) {
+            throw new RuntimeException("Erro ao fazer parse do XML. O mesmo está inválido");
         } catch (Exception ex){
             throw new RuntimeException("Erro ao abrir o arquivo: " + ex.getMessage());
         }
 
     }
 
-    private void parseNotaFiscal(NotaFiscalCliente notaFiscalCliente){
+    public void parseNotaFiscal(NotaFiscalCliente notaFiscalCliente){
         try {
             TNfeProc tNfeProc = xmlJaxb(notaFiscalCliente.getXml());
             notaFiscalCliente.setTNfeProc(tNfeProc);
+            notaFiscalCliente.setStatus(2);
         } catch (RuntimeException ex) {
+            notaFiscalCliente.getMensagensErro().add(ex.getMessage());
+            notaFiscalCliente.setStatus(99);
             notaFiscalCliente.setErro(true);
             notaFiscalCliente.setTNfeProc(null);
         }
     }
 
-    private void geraListaProduto(TNfeProc nfeProc){
+    public void envioProdutoNova(TNfeProc nfeProc){
 
         String cnpjEmitente = nfeProc.getNFe().getInfNFe().getEmit().getCNPJ();
 
@@ -95,20 +85,28 @@ public class XmlNotaFiscal {
                 .map(prodNfe -> produtoDissambler.map(prodNfe.getProd()))
                 .collect(Collectors.toList());
 
-        produtos.forEach(produto -> System.out.println(produto));
+        cadastroProdutoService.cadastrarProdutos(produtos);
+
     }
 
-    public TNfeProc main() throws IOException, JAXBException {
+    public List<Produto> geraListaProdutos(List<NotaFiscalCliente> listaNotasFiscais){
 
-        List<NotaFiscalCliente> notaFiscalClientes = notaFsicalRepository.findByStatus(1L);
+        List<NotaFiscalCliente> nfsSemErro = listaNotasFiscais.stream()
+                .filter(nfe -> !nfe.isErro())
+                .collect(Collectors.toList());
 
-        notaFiscalClientes.forEach(p -> {
-            parseNotaFiscal(p);
-            geraListaProduto(p.getTNfeProc());
-            //notaFsicalRepository.save(p);
+        List<TNFe.InfNFe.Det.Prod> produtosNf = new ArrayList<>();
+
+        nfsSemErro.forEach(nfe -> {
+            List<TNFe.InfNFe.Det> detList = nfe.getTNfeProc().getNFe().getInfNFe().getDet();
+            List<TNFe.InfNFe.Det.Prod> prods = detList.stream().map(det -> det.getProd()).collect(Collectors.toList());
+            produtosNf.addAll(prods);
         });
 
-        return null;
+        List<Produto> produtoList = produtosNf.stream()
+                .map(prod -> produtoDissambler.map(prod)).collect(Collectors.toList());
+
+        return produtoList;
 
     }
 
