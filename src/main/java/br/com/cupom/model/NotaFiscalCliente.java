@@ -1,5 +1,6 @@
 package br.com.cupom.model;
 
+import br.com.cupom.api.model.Produto;
 import br.com.cupom.utils.notafiscal.TNfeProc;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -39,5 +40,8 @@ public class NotaFiscalCliente {
 
     @Transient
     private TNfeProc tNfeProc;
+
+    @Transient
+    private List<Produto> produtoList = new ArrayList<>();
 
 }

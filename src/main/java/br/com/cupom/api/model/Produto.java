@@ -1,5 +1,6 @@
 package br.com.cupom.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
@@ -67,4 +68,6 @@ public class Produto {
     @PositiveOrZero
     private Integer nItemPed;
 
+    @JsonIgnore
+    private String message;
 }

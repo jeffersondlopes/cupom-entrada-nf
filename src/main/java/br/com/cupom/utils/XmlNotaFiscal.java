@@ -56,16 +56,17 @@ public class XmlNotaFiscal {
             return tNfeProc;
         } catch (JAXBException ex) {
             throw new RuntimeException("Erro ao fazer parse do XML. O mesmo está inválido");
-        } catch (Exception ex){
+        } catch (Exception ex) {
             throw new RuntimeException("Erro ao abrir o arquivo: " + ex.getMessage());
         }
 
     }
 
-    public void parseNotaFiscal(NotaFiscalCliente notaFiscalCliente){
+    public void parseNotaFiscal(NotaFiscalCliente notaFiscalCliente) {
         try {
             TNfeProc tNfeProc = xmlJaxb(notaFiscalCliente.getXml());
             notaFiscalCliente.setTNfeProc(tNfeProc);
+            notaFiscalCliente.setProdutoList(geraListaProdutos(notaFiscalCliente));
             notaFiscalCliente.setStatus(2);
         } catch (RuntimeException ex) {
             notaFiscalCliente.getMensagensErro().add(ex.getMessage());
@@ -75,7 +76,7 @@ public class XmlNotaFiscal {
         }
     }
 
-    public void envioProdutoNova(TNfeProc nfeProc){
+    public void envioProdutoNova(TNfeProc nfeProc) {
 
         String cnpjEmitente = nfeProc.getNFe().getInfNFe().getEmit().getCNPJ();
 
@@ -89,7 +90,7 @@ public class XmlNotaFiscal {
 
     }
 
-    public List<Produto> geraListaProdutos(List<NotaFiscalCliente> listaNotasFiscais){
+    public List<Produto> geraListaProdutos(List<NotaFiscalCliente> listaNotasFiscais) {
 
         List<NotaFiscalCliente> nfsSemErro = listaNotasFiscais.stream()
                 .filter(nfe -> !nfe.isErro())
@@ -104,6 +105,19 @@ public class XmlNotaFiscal {
         });
 
         List<Produto> produtoList = produtosNf.stream()
+                .map(prod -> produtoDissambler.map(prod)).collect(Collectors.toList());
+
+        return produtoList;
+
+    }
+
+    public List<Produto> geraListaProdutos(NotaFiscalCliente notaFiscalCliente) {
+
+        List<TNFe.InfNFe.Det> detList = notaFiscalCliente.getTNfeProc().getNFe().getInfNFe().getDet();
+        List<TNFe.InfNFe.Det.Prod> prods = detList.stream().map(det -> det.getProd()).collect(Collectors.toList());
+
+        List<Produto> produtoList = prods.stream()
+                .filter(prod -> prod.getCEAN().matches("[0-9]*"))
                 .map(prod -> produtoDissambler.map(prod)).collect(Collectors.toList());
 
         return produtoList;

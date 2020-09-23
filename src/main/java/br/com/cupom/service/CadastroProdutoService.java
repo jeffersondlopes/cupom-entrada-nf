@@ -1,6 +1,7 @@
 package br.com.cupom.service;
 
 import br.com.cupom.api.model.Produto;
+import br.com.cupom.model.NotaFiscalCliente;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,4 +29,14 @@ public class CadastroProdutoService {
 
     }
 
+    public void cadastrarProdutos(NotaFiscalCliente nfe) {
+
+        nfe.getProdutoList().forEach(produto -> {
+            if (!restService.produto(produto)) {
+                nfe.getMensagensErro().add(produto.getMessage());
+                nfe.setStatus(99);
+            }
+        });
+
+    }
 }

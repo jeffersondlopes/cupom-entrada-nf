@@ -1,16 +1,18 @@
 package br.com.cupom.api.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter
-@Builder
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Problem {
 
     private Integer status;

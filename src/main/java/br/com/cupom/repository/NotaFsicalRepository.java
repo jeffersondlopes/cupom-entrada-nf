@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface NotaFsicalRepository extends MongoRepository<NotaFiscalCliente,String> {
 
 
-    List<NotaFiscalCliente> findByStatus(Long status);
+    List<NotaFiscalCliente> findByStatus(Integer status);
 
 
 }

@@ -67,17 +67,16 @@ public class NotaFiscalService {
         return notaFiscalDissambler.DomainToModel(nfDomain);
     }
 
-    public void cadastrarProdutos() throws Exception {
+    public void cadastrarProdutos() {
 
-        List<NotaFiscalCliente> listaNfPrincipal = notaFsicalRepository.findByStatus(1L);
+        List<NotaFiscalCliente> listaNfPrincipal = notaFsicalRepository.findByStatus(1);
 
         if (listaNfPrincipal.size() > 0) {
-            listaNfPrincipal.forEach(p -> xmlNotaFiscal.parseNotaFiscal(p));
-            List<Produto> produtos = xmlNotaFiscal.geraListaProdutos(listaNfPrincipal);
-            cadastroProdutoService.cadastrarProdutos(produtos);
 
-            listaNfPrincipal.forEach(p -> {
-                notaFsicalRepository.save(p);
+            listaNfPrincipal.forEach(nfe -> {
+                xmlNotaFiscal.parseNotaFiscal(nfe);
+                cadastroProdutoService.cadastrarProdutos(nfe);
+                notaFsicalRepository.save(nfe);
             });
         }
 
